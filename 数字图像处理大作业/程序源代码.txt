@@ -1,0 +1,55 @@
+I = imread("gray.png");
+d = imread('cankao.jpg');
+RGB = Gray2rgb(I, d);
+imshow(RGB);
+figure, 
+imshow(I),title('处理前');
+figure,
+imshow(RGB),title('处理后');
+
+
+function R=Gray2rgb(I,d)
+% Gray2rgb函数，寻找目标图像中灰度接近的点，逐像素为灰度图像填充颜色。
+    tic;
+    % 色彩通道扩展
+    I(:,:,2) = I(:,:,1); % 复制灰度信息到所有三个通道
+    I(:,:,3) = I(:,:,1);
+
+    % 色彩空间转换
+    d = rgb2ycbcr(d);
+    g = rgb2ycbcr(I);
+
+    ms=double(d(:,:,1));
+    mt=double(g(:,:,1));
+     
+    d1=max(max(ms))-min(min(ms));
+    d2=max(max(mt))-min(min(mt));
+    
+    % 标准化
+    dx1=ms;
+    dx2=mt;
+    dx1=(dx1*255)/(255-d1);
+    dx2=(dx2*255)/(255-d2);
+    [mx,my,~]=size(dx2);
+    
+    mage = uint8(zeros(mx, my, 3));
+    % 灰度匹配
+    for i=1:mx
+        for j=1:my
+            iy=dx2(i,j);
+            tmp=abs(dx1-iy);
+            % 寻找目标图像中灰度最为接近的点
+            ck=min(min(tmp));
+            [r,c] = find(tmp==ck);
+            ck=isempty(r);
+            if (ck~=1)            
+                mage(i,j,2)=d(r(1),c(1),2);
+                mage(i,j,3)=d(r(1),c(1),3);
+                mage(i,j,1)=g(i,j,1);
+            end
+        end
+    end
+    result = ycbcr2rgb(mage);
+    R=uint8(result);
+    toc;
+end
